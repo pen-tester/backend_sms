@@ -1,24 +1,28 @@
 #!/usr/bin/env node
 
-
+//For http main process
 var express = require('express');
 var session = require('express-session');
-
-var customer = require('./route/customer');
-var user = require('./route/user');
-var main_route = require('./route/main');
-var helper_route=require('./route/helper');
-var checkout_route=require('./route/checkout');
-var api_route=require('./route/api');
-
-var socketio = require('socket.io');
-var notification_process = require('./server/notification');
-var global_area = require('./config/global');
-
-var mongoose = require("mongoose");
-var config=require("./config/config");
 var bodyParser = require("body-parser");
 var path = require('path');
+
+//Routing....
+var main_route = require('./route/main');
+var api_route=require('./route/api');
+
+
+//Socket io ....
+var socketio = require('socket.io');
+var notification_process = require('./server/notification');
+
+//Global part
+var global_area = require('./config/global');
+
+//Database...
+var mongoose = require("mongoose");
+//Config for the app
+var config=require("./config/config");
+
 
 const options = {
     reconnectTries: Number.MAX_VALUE, // Never stop trying to reconnect
@@ -54,16 +58,13 @@ app.use(session({secret:config.session_secretkey,
     cookie: { secure: true }
 }));
 
-//For the url starts with report
-app.use('/customer', customer);
-app.use('/user', user);
-app.use('/helper',helper_route);
-app.use('/checkout', checkout_route);
-app.use('/api', api_route);
+//Routing...
+app.use('/v10', api_route);  // For the api...
 app.use('/',main_route);
 
+//App start...
 
-var server = app.listen(8090, function(){
+var server = app.listen(config.port_number, function(){
         var host = server.address().address;
         var port = server.address().port;
         console.log("server started ", host, ":", port);

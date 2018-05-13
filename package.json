@@ -23,6 +23,7 @@
   "dependencies": {
     "body-parser": "^1.18.2",
     "cookie-parser": "^1.4.3",
+    "crc": "^3.5.0",
     "ejs": "^2.5.7",
     "express": "^4.16.2",
     "express-session": "^1.15.6",
@@ -34,6 +35,6 @@
     "socket.io": "^2.0.4",
     "sqlstring": "^2.3.1",
     "stripe": "^5.5.0",
-    "twilio": "^3.11.3"
+    "twilio": "^3.16.0"
   }
 }

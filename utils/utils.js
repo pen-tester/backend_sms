@@ -1,5 +1,8 @@
+//System Codes for request, respond, some types
+var System_Code = require('../config/system_code');
 var Config  = require('../config/config');
-var MessageCode = require('../config/message_code');
+
+//Npm Modules
 var Crypto = require('crypto');
 
 var Utils = {
@@ -95,14 +98,14 @@ var Utils = {
     check_authentification(auth_token){  //jwt token is auth_token
         var tokens = auth_token.split(/\s+/);
         if(tokens.length!=2 || tokens[0]!="auth"){
-            return {status:MessageCode.code.fail, code:MessageCode.error.authen_fail, error:"Authorization failed"};        
+            return {status:System_Code.statuscode.fail, code:System_Code.responsecode.jwt_authen_error};        
         }
     
         var token = unescape(tokens[1]);
     
         var parts = token.split(/:/);
         if(parts.length!=2){
-            return {status:MessageCode.code.fail, code:MessageCode.error.authen_fail, error:"Authorization failed"};         
+            return {status:System_Code.statuscode.fail, code:System_Code.responsecode.jwt_authen_error}; 
         }
         
         var data_origin_base64 =parts[0];
@@ -113,10 +116,30 @@ var Utils = {
         var cal_sig = Crypto.createHmac('sha256', Config.jwt_key_gen_code).update(data_origin).digest('hex');
     
         if(sig!=cal_sig){
-            return {status:MessageCode.code.fail, code:MessageCode.error.authen_fail, error:"Authorization failed"};                   
+            return {status:System_Code.statuscode.fail, code:System_Code.responsecode.jwt_authen_error};                    
         }        
 
-        return {status:MessageCode.code.success, code:MessageCode.ok, data:data};
+        return {status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:data}; 
+
+    },
+    
+    generateJWTtoken:function(user){
+        var now = new Date();
+        now.setDate(now.getDate()+Config.expire_session_days);
+        var data =
+         { 
+            email: user.email,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            role:user.role,
+            logged_date:Date.now(),
+            expire_date:now.getTime()
+          }
+        var data_origin = JSON.stringify(data);
+        var cal_sig = Crypto.createHmac('sha256', Config.jwt_key_gen_code).update(data_origin).digest('hex');
+
+        var jwt_token = new Buffer(data_origin).toString("base64") + ":" + cal_sig;
+        return jwt_token;
     }
 }
 
