@@ -10,7 +10,7 @@ var users_schema = mongoose.Schema({
     created:{ type: Date, default: Date.now },
     role:{type:Number , default:System_Code.user.role.user},
     phone:{
-        outgoing:[Schema.Types.Mixed],
+        outgoing:[Schema.Types.Mixed],  /* {phone:String, status:Number} */
         incoming:[Schema.Types.Mixed]
     },
     status:{type:Number , default:System_Code.user.status.inactive},

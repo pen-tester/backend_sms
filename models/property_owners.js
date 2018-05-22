@@ -1,14 +1,26 @@
-import { Schema } from "mongoose";
 
 var mongoose = require("mongoose");
+var Schema = mongoose.Schema;
 
 var property_owners_schema = mongoose.Schema({
+    id:String,
     phone:String,  
-
+    firstname:String,
+    lastname:String,
+    owner_city:String,
+    owner_state:String,
+    email:String,
+    contact:String,
+    leadtype:String,
+    status:String,
     properties:[
         Schema.Types.Mixed
         /*
         {
+            refid: uploaded_propertyId equals property id....
+            date_added,date_sent,
+            address, city, state, firstname, lastname, owner_address,owner_city, owner_state 
+            phone0        	 phone1        	 phone2        	 phone3        	 phone4        	 phone5        	 phone6        	 phone7        	 phone8        	 phone9        	 leadtype      	
             upload_user:id or name
             realotor:...
             podio:
@@ -20,12 +32,11 @@ var property_owners_schema = mongoose.Schema({
                     option:Number,
                     sent_date:Date,
                     sent_userid:String
-                }
+                } 
             ]
         }
         */
     ],
-    status:Number,
     chat:[
         Schema.Types.Mixed
         /*
@@ -33,10 +44,23 @@ var property_owners_schema = mongoose.Schema({
             replied_chat:Number  message:type
             content:String,
             created:{type:Date ,default:Date.now},
-            userid:String   // "" : incoming sms , userid: outgoing sms  
+            userid:String   // "" : incoming sms , userid: outgoing sms ,
+            phone:String 
         }
         */
-    ]
+    ],
+    voice:[
+        Schema.Types.Mixed
+        /*
+        {
+            calling_type:Number  message:type
+            created:{type:Date ,default:Date.now},
+            userid:String   // "" : incoming sms , userid: outgoing sms ,
+            phone:String 
+        }
+        */       
+    ],
+    last_sms_received_date:Date
 },{collection:'property_owners'});
 
 var property_owners = mongoose.model('property_owner', property_owners_schema);

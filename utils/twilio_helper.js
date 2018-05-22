@@ -2,7 +2,7 @@ var Config  = require('../config/config');
 var twilio = require('twilio');
 
 var twilio_helper={
-    send_sms:function(to, sms){
+    send_sms:function(from, to, sms){
 
         var result = "ready:";
 
@@ -10,8 +10,8 @@ var twilio_helper={
         return twilio_client.messages.create({
             body: sms ,
             to: to,  // Text this number
-            from: Config.twilio_config.fromNumber // From a valid Twilio number
-        })
+            from: from // From a valid Twilio number
+        });
     }
 }
 

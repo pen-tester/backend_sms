@@ -1,4 +1,10 @@
 var SystemCode={
+    http:{
+        forbidden:403,
+        unauthorized:401,
+        bad_req:400,
+        req_ok:200
+    },
     user:{
         role:{
             admin:1000,
@@ -12,7 +18,12 @@ var SystemCode={
         permission:{
             active:1,
             inactive:0
+        },
+        phone:{
+            active:1,
+            inactive:0            
         }
+        
     },
     property_owner:{
         status:{
@@ -43,6 +54,14 @@ var SystemCode={
             code:301,
             msg:"The error caused by mongodb."
         },
+        role_error:{
+            code:302,
+            msg:"role is not permitted"
+        },
+        propertyowner_model_error:{
+            code:303,
+            msg:"The error caused by mongodb propery owner."
+        },        
         ok:{
             code:200,
             msg:"Successfully requested."
@@ -54,6 +73,10 @@ var SystemCode={
         no_user:{
             code:404,
             msg:"No User such that"
+        },
+        purchase_error:{
+            code:500,
+            msg:"Successfully requested."
         }
     },    
     requestcode:{

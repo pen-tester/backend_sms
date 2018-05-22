@@ -1,7 +1,8 @@
 //System Codes for request, respond, some types
 var System_Code = require('../config/system_code');
 var Config  = require('../config/config');
-
+var fs =require('fs');
+var path = require('path');
 //Npm Modules
 var Crypto = require('crypto');
 
@@ -111,7 +112,13 @@ var Utils = {
         var data_origin_base64 =parts[0];
         var data_origin = new Buffer( parts[0], 'base64').toString();
         var sig = parts[1];
-        var data = JSON.parse(data_origin);
+        var data = null;
+        try{
+            data = JSON.parse(data_origin);
+        }catch(ex){
+            Utils.logger(ex);
+        }
+        
     
         var cal_sig = Crypto.createHmac('sha256', Config.jwt_key_gen_code).update(data_origin).digest('hex');
     
@@ -128,6 +135,7 @@ var Utils = {
         now.setDate(now.getDate()+Config.expire_session_days);
         var data =
          { 
+            id:user.id,
             email: user.email,
             firstname: user.firstname,
             lastname: user.lastname,
@@ -140,6 +148,33 @@ var Utils = {
 
         var jwt_token = new Buffer(data_origin).toString("base64") + ":" + cal_sig;
         return jwt_token;
+    },
+
+    logger:function(error){
+        console.log("time:", Utils.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss"), " data:", error);
+        var logfile = path.join(__basedir, 'log.txt');
+        console.log("log", logfile);
+        fs.appendFile(logfile,"time:"+Utils.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss") + " data:" + error + "\r\n" ,
+            function(err){
+                console.log(err);
+            }
+        )
+    },
+
+    getActiveNumber:function(phones){
+        try{
+            var len = phones.length;
+            for(var i=0; i<len ;i++){
+                var phone = phones[i];
+                if(phone.status == System_Code.user.phone.active){
+                    return phone.phone;
+                }
+            }
+        }
+        catch(ex){
+
+        }
+        return "";
     }
 }
 

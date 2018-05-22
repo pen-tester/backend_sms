@@ -32,6 +32,7 @@ router.use(function origin_set (req,res, next){
  
  router.use(function authorization (req,res, next){
      // console.log('Time: ', Date.now(), 'Requests: ', req);
+  
      next();
  });
 
@@ -105,8 +106,9 @@ router.post("/register", function(req,res){
             firstname = parts[0]; 
         }
 
-        var timestampe = Math.round(Date.now()/1000);
-        var userid = "u" + CRC.crc16(timestampe) + timestampe;
+        //var timestampe = Math.round(Date.now()/1000);
+        var timestampe = Date.now();
+        var userid = "u" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
 
         var user = new UserModel(
             {

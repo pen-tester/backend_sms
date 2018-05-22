@@ -5,6 +5,8 @@ var express = require('express');
 var session = require('express-session');
 var bodyParser = require("body-parser");
 var path = require('path');
+const fileUpload = require('express-fileupload');
+
 
 //Routing....
 var main_route = require('./route/main');
@@ -40,6 +42,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function(){
     console.log("mongodb is connected to db",config.mongodb_uri);
 })
+global.__basedir = __dirname;
 
 
 var app=express();
@@ -57,6 +60,8 @@ app.use(session({secret:config.session_secretkey,
     saveUninitialized: true,
     cookie: { secure: true }
 }));
+
+app.use(fileUpload());
 
 //Routing...
 app.use('/v10', api_route);  // For the api...

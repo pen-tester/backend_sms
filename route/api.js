@@ -12,15 +12,21 @@ var Config  = require('../config/config');
 
 var twilio_helper = require('../utils/twilio_helper');
 
-//Shopping DB model
+
 
 
 //Sub route module
 var user_route = require('./user/user');
+var authuser_route = require('./authuser/user');
+var adminuser_route = require('./adminuser/admin');
+var service_route = require('./service/main');
+var authservice_route = require('./authuserservice/user');
 
-
-
+router.use('/authuser', authuser_route);
+router.use('/admin', adminuser_route);
 router.use('/user', user_route);
+router.use('/service', service_route);
+router.use('/authservice', authservice_route);
 //Middleware for this router
 router.use(function timeLog (req,res, next){
    // console.log('Time: ', Date.now(), 'Requests: ', req);
@@ -36,7 +42,8 @@ router.use(function origin_set (req,res, next){
     res.set("Access-Control-Allow-Headers","Content-Type, Authorization, X-Requested-With, Origin");   
      next();
  });
- 
+
+
  router.use(function authorization (req,res, next){
      // console.log('Time: ', Date.now(), 'Requests: ', req);
      next();

@@ -1,9 +1,9 @@
-import { Schema } from "mongoose";
-
 var mongoose = require("mongoose");
+var Schema = mongoose.Schema;
 
 var sms_schema = mongoose.Schema({
-    option:Number,
+    id:String,    
+    tag:String,
     created:{type:Date, default:Date.now},
     updated:[
         Schema.Types.Mixed   
