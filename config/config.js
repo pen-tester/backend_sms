@@ -9,8 +9,8 @@ var config = {
         database:"vaultdb"
       },
     twilio_config:{
-        accountSid:"AC883ace0e82efe5dd5c08c6550adae88e",
-        authToken:"30b23223a8b969970a556645514f9ecf",
+        accountSid:"xxxx",
+        authToken:"xxx",
         fromNumber:"+16195972521",
         callback_baseurl:"http://api.probateproject.com/"
     },
