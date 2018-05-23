@@ -129,7 +129,7 @@ router.use(function timeLog (req,res, next){
 
                 //console.log("sent_history" , sent_history, sms);
                 //console.log(docs);
-                sendProperty(docs, sms, sent_history, userid).then((res)=>{
+                sendProperty(docs, sms, sent_history, userid).then((result)=>{
                     res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
                 })
                 .catch((err)=>{
@@ -156,7 +156,7 @@ router.use(function timeLog (req,res, next){
 
                 //console.log("sent_history" , sent_history, sms);
                 //console.log(docs);
-                sendProperty(docs, sms, sent_history, userid).then((res)=>{
+                sendProperty(docs, sms, sent_history, userid).then((result)=>{
                     res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
                 })
                 .catch((err)=>{
