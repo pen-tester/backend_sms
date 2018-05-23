@@ -111,7 +111,6 @@ router.use(function timeLog (req,res, next){
             return;            
         }
 
-
         //count == -1 all....
         if(count == -1){
             Property_uploadModel.find(condition ,function(err, docs){
@@ -130,64 +129,14 @@ router.use(function timeLog (req,res, next){
 
                 //console.log("sent_history" , sent_history, sms);
                 //console.log(docs);
-                var len = docs.length;
-                console.log(docs);
-                for(var i=0 ;i<len; i++){
-
-                    var prp_up = docs[i];
-                    var len_phone = prp_up.property.phone.length;
-                    //console.log(len_phone);
-                    //console.log("phone", prp_up.property.phone);
-                    for(var i_phone=0; i_phone<len_phone ;i_phone++){
-                        var new_phone = prp_up.property.phone[i_phone];
-                        if(new_phone == "") continue;
-                        //console.log("phone",new_phone);
-                        var tmp_prp = JSON.parse(JSON.stringify(prp_up.property));
-                        delete tmp_prp.phone;
-
-                        tmp_prp.upload_userid = prp_up.upload_userid;
-                        tmp_prp.refid = prp_up.id;
-                        //tmp_prp.sent_history
-
-                       // console.log(prp_up, tmp_prp);
-
-                        //Sending sms.... to this phone...
-                        var smscontent = sms.content.replace("{name}", tmp_prp.firstname + " "+tmp_prp.lastname);
-                        smscontent = smscontent.replace("{addr}", tmp_prp.address);
-                        smscontent = smscontent.replace("{city}", tmp_prp.city);
-                        smscontent = smscontent.replace("{state}", tmp_prp.state);
-
-                        //Get the full user info... with userid...
-                        sendSms(smscontent, userid, new_phone);
-
-                       // console.log("sms content", smscontent);
-                        var chat = {
-                            replied_chat:System_Code.message.type.incoming,
-                            content:smscontent,
-                            created:Date.now(),
-                            userid:userid,   // "" : incoming sms , userid: outgoing sms ,
-                            phone:"" 
-                        }
-                        console.log("phone",new_phone);
-
-                        updateOwnerinfo(new_phone, tmp_prp, chat, sent_history);
-                    }
-
-                    var sent_history={
-                        smstag:sms.tag,
-                        templateid:sms.id,
-                        sent_date:Date.now(),
-                        sent_userid:userid,
-                        success_phone:[]
-                    }
-
-                    prp_up.sent_history.push(sent_history);
-                    prp_up.save(function(err){
-                       // console.log(err);
-                    });
-                }
+                sendProperty(docs, sms, sent_history, userid).then((res)=>{
+                    res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
+                })
+                .catch((err)=>{
+                    res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});    
+                });
                 
-                res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
+                
             }); 
         }
         else{
@@ -207,64 +156,12 @@ router.use(function timeLog (req,res, next){
 
                 //console.log("sent_history" , sent_history, sms);
                 //console.log(docs);
-                var len = docs.length;
-                console.log(docs);
-                for(var i=0 ;i<len; i++){
-
-                    var prp_up = docs[i];
-                    var len_phone = prp_up.property.phone.length;
-                    //console.log(len_phone);
-                    //console.log("phone", prp_up.property.phone);
-                    for(var i_phone=0; i_phone<len_phone ;i_phone++){
-                        var new_phone = prp_up.property.phone[i_phone];
-                        if(new_phone == "") continue;
-                        //console.log("phone",new_phone);
-                        var tmp_prp = JSON.parse(JSON.stringify(prp_up.property));
-                        delete tmp_prp.phone;
-
-                        tmp_prp.upload_userid = prp_up.upload_userid;
-                        tmp_prp.refid = prp_up.id;
-                        //tmp_prp.sent_history
-
-                       // console.log(prp_up, tmp_prp);
-
-                        //Sending sms.... to this phone...
-                        var smscontent = sms.content.replace("{name}", tmp_prp.firstname + " "+tmp_prp.lastname);
-                        smscontent = smscontent.replace("{addr}", tmp_prp.address);
-                        smscontent = smscontent.replace("{city}", tmp_prp.city);
-                        smscontent = smscontent.replace("{state}", tmp_prp.state);
-
-                        //Get the full user info... with userid...
-                        sendSms(smscontent, userid, new_phone);
-
-                       // console.log("sms content", smscontent);
-                        var chat = {
-                            replied_chat:System_Code.message.type.incoming,
-                            content:smscontent,
-                            created:Date.now(),
-                            userid:userid,   // "" : incoming sms , userid: outgoing sms ,
-                            phone:"" 
-                        }
-                        console.log("phone",new_phone);
-
-                        updateOwnerinfo(new_phone, tmp_prp, chat, sent_history);
-                    }
-
-                    var sent_history={
-                        smstag:sms.tag,
-                        templateid:sms.id,
-                        sent_date:Date.now(),
-                        sent_userid:userid,
-                        success_phone:[]
-                    }
-
-                    prp_up.sent_history.push(sent_history);
-                    prp_up.save(function(err){
-                       // console.log(err);
-                    });
-                }
-                
-                res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
+                sendProperty(docs, sms, sent_history, userid).then((res)=>{
+                    res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
+                })
+                .catch((err)=>{
+                    res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});    
+                });
             });    
         }
     })
@@ -272,6 +169,58 @@ router.use(function timeLog (req,res, next){
 
  
  }); 
+
+ async function sendProperty(docs, sms, sent_history ,userid){
+    var len = docs.length;
+    console.log(docs);
+    for(var i=0 ;i<len; i++){
+
+        var prp_up = docs[i];
+        var len_phone = prp_up.property.phone.length;
+        //console.log(len_phone);
+        //console.log("phone", prp_up.property.phone);
+        for(var i_phone=0; i_phone<len_phone ;i_phone++){
+            var new_phone = prp_up.property.phone[i_phone];
+            if(new_phone == "") continue;
+            //console.log("phone",new_phone);
+            var tmp_prp = JSON.parse(JSON.stringify(prp_up.property));
+            delete tmp_prp.phone;
+
+            tmp_prp.upload_userid = prp_up.upload_userid;
+            tmp_prp.refid = prp_up.id;
+            //tmp_prp.sent_history
+
+           // console.log(prp_up, tmp_prp);
+
+            //Sending sms.... to this phone...
+            var smscontent = sms.content.replace("{name}", tmp_prp.firstname + " "+tmp_prp.lastname);
+            smscontent = smscontent.replace("{addr}", tmp_prp.address);
+            smscontent = smscontent.replace("{city}", tmp_prp.city);
+            smscontent = smscontent.replace("{state}", tmp_prp.state);
+
+            //Get the full user info... with userid...
+            sendSms(smscontent, userid, new_phone);
+
+           // console.log("sms content", smscontent);
+            var chat = {
+                replied_chat:System_Code.message.type.incoming,
+                content:smscontent,
+                created:Date.now(),
+                userid:userid,   // "" : incoming sms , userid: outgoing sms ,
+                phone:"" 
+            }
+            console.log("phone",new_phone);
+
+            await updateOwnerinfo(new_phone, tmp_prp, chat, sent_history);
+        }
+
+        prp_up.sent_history.push(sent_history);
+        prp_up.save(function(err){
+           // console.log(err);
+        });
+    }
+
+ }
 
  async function sendSms(smscontent ,userid, to){
     const twilio_helper = require('../../utils/twilio_helper');
@@ -306,7 +255,7 @@ router.use(function timeLog (req,res, next){
 
  }
 
- function updateOwnerinfo(new_phone, tmp_prp, chat, sent_history){
+ async function updateOwnerinfo(new_phone, tmp_prp, chat, sent_history){
      console.log("owner phone", new_phone);
     PropertyOwnerModel.findOne({phone:new_phone}, function(err, user){
         if(err){
