@@ -119,8 +119,16 @@ router.use(function timeLog (req,res, next){
                     userid:user.id,   // "" : incoming sms , userid: outgoing sms ,
                     phone:to
                 };
-                prop_owner.chat.push(chat);
+                prop_owner.chat.unshift(chat);
                 prop_owner.last_sms_received_date = Date.now();
+
+                prop_owner.newmessage = 1;
+
+                global_area.notification_io.to('channel'+prop_owner.id).emit("newmessage", {
+                    chat:chat,
+                    firstname:prop_owner.firstname,
+                    lastname:prop_owner.lastname
+                });
 
                 prop_owner.save(function(err){
                     console.log("chat stored ", chat);
@@ -142,12 +150,17 @@ router.use(function timeLog (req,res, next){
  });
  
  function sendsmsto_incoming(from, to , body, user){
-    var active_incoming = getactivephone(user.phone.incoming);
-    var active_outcoming = getactivephone(user.phone.outgoing);
-    const twilio_helper = require('../../utils/twilio_helper');
-    if(active_incoming !="") twilio_helper.send_sms(active_outcoming, active_incoming,
-       "from:"+ from +" to: "+ to + " body: " + body
-    );
+     try{
+        var active_incoming = getactivephone(user.phone.incoming);
+        var active_outcoming = getactivephone(user.phone.outgoing);
+        const twilio_helper = require('../../utils/twilio_helper');
+        if(active_incoming !="") twilio_helper.send_sms(active_outcoming, active_incoming,
+           "from:"+ from +" to: "+ to + " body: " + body
+        );
+     }catch(ex){
+        console.log(ex);
+     }
+
     //Sending the sms to the master....
     //twilio_helper.send_sms(active_outcoming, active_incoming,      "from:"+ from +" to: "+ to + " body: " + body)    
  }

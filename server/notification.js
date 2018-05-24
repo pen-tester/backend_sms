@@ -8,7 +8,7 @@ module.exports=function(io){
         console.log('new app connected');
         socket.on('register', function(data){
             console.log(data);
-            socket.join('request'+data);
+            socket.join('channel'+data.id);
         })
     });
    /* io.on('connection', function(socket){

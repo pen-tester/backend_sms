@@ -19,7 +19,7 @@ var file_route = require('./file');
 var smstemplate_route=require('./smstemplate');
 var chat_route=require('./chat');
 var uploadproperty_route=require('./uploadproperty');
-
+var owner_route = require('./owner');
 //Middleware for this router
 router.use(function timeLog (req,res, next){
    // console.log('Time: ', Date.now(), 'Requests: ', req);
@@ -84,6 +84,7 @@ router.use(function origin_set (req,res, next){
  router.use('/smstemplate', smstemplate_route);
  router.use('/chat', chat_route);
  router.use('/uploadproperty', uploadproperty_route);
+ router.use('/owner', owner_route);
 
  router.all("/test", function(req,res){
     res.json({status:'error', error:'The checkout has to be post method'});

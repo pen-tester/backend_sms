@@ -13,6 +13,8 @@ var property_owners_schema = mongoose.Schema({
     contact:String,
     leadtype:String,
     status:String,
+    rated:Number,
+    newmessage:Number,
     properties:[
         Schema.Types.Mixed
         /*

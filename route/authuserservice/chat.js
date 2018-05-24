@@ -40,7 +40,6 @@ router.use(function timeLog (req,res, next){
       next();
   });
  
- 
  router.post("/list/:page/:count*?", function(req,res){
     var page = parseInt(req.params.page || '0');
     var count = parseInt(req.params.count || '10');
@@ -62,8 +61,31 @@ router.use(function timeLog (req,res, next){
         chat_condition ={};
     }
 
+
+    console.log(page, count);
     PropertyOwnerModel.aggregate(
-        [{$match:condition}, {$project:{chat:{$filter:{input:'$chat', as:'item', cond:{$and:[{$eq:['$$item.replied_chat',0]}, chat_condition]}}}, phone:1, firstname:1, lastname:1, id:1, leadtype:1, status:1, _id:0}}, {$project:{chat:{$slice:['$chat',-3]}, phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1, nonempty:{$gte:[{$size:'$chat'},1]}}},{$match:{nonempty:true}}]       
+        [{$match:condition},        { $sort : { last_sms_received_date : -1} },
+            {$skip: page*count},
+            {$limit:count}
+        , {$project:{chat:{$filter:{input:'$chat', as:'item', cond:{$and:[{$eq:['$$item.replied_chat',0]}, chat_condition]}}}, phone:1, firstname:1, lastname:1, id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, _id:0}}, 
+        {$project:{chat:{$slice:['$chat',3]}, sent_userid:{$concat:[userid]}, phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, nonempty:{$gte:[{$size:'$chat'},1]}}},{$match:{nonempty:true}},
+        {$lookup:     {
+            from: 'users',
+            localField: 'sent_userid',
+            foreignField: 'id',
+            as: 'user'
+          }},
+            {$project: {
+                "userinfo": { $arrayElemAt: [ "$user", 0 ] } ,chat:1, phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1
+                , rated:1, newmessage:1
+                }
+            } //for sent user info
+            ,{$project: {
+                'userinfo.id':1,'userinfo.firstname':1,'userinfo.lastname':1,chat:1 , phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1
+                , rated:1, newmessage:1
+                }
+            }
+        ]       
         ,function(err, docs){
             if(err){
                 console.log(err);
@@ -170,6 +192,47 @@ router.use(function timeLog (req,res, next){
  
  }); 
 
+ router.post("/sendsms", function(req,res){
+    var content = req.body.content || '';
+    var ownerid = req.body.id || '';
+
+    var userinfo = res.locals.userinfo;
+    var userid = userinfo.id;
+    var chat = {
+        replied_chat:System_Code.message.type.incoming,
+        content:content,
+        created:Date.now(),
+        userid:userid,   // "" : incoming sms , userid: outgoing sms ,
+        phone:"" 
+    }
+
+    //console.log(docs);
+    updateOwnerinfochat(ownerid, chat).then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    })
+    .catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});    
+    });
+
+ }); 
+
+ async function updateOwnerinfochat(ownerid, chat){
+    var owner = await PropertyOwnerModel.findOne({id:ownerid}).exec();
+    if(owner == null){
+        throw new Error("no owner");
+        return;
+    } 
+    
+    sendSms(chat.content, chat.userid, owner.phone);
+
+    owner.chat.unshift(chat);
+    owner.save(function(err){
+        // console.log(err, user, tmp_prp);
+    });
+    return true;
+ }
+
+
  async function sendProperty(docs, sms, sent_history ,userid){
     var len = docs.length;
     console.log(docs);
@@ -197,6 +260,8 @@ router.use(function timeLog (req,res, next){
             smscontent = smscontent.replace("{addr}", tmp_prp.address);
             smscontent = smscontent.replace("{city}", tmp_prp.city);
             smscontent = smscontent.replace("{state}", tmp_prp.state);
+            smscontent = smscontent.replace(new RegExp("<br>", 'g'), "\r\n");
+           
 
             //Get the full user info... with userid...
             sendSms(smscontent, userid, new_phone);
@@ -281,12 +346,13 @@ router.use(function timeLog (req,res, next){
                 newowner.owner_city = tmp_prp.owner_city;
                 newowner.leadtype = tmp_prp.leadtype;
                 newowner.status = "Low";
+                newowner.rated = 0;
             }
             catch(ex){
 
             }
 
-            newowner.chat.push(chat);
+            newowner.chat.unshift(chat);
 
             newowner.save(function(err){
                 //console.log(err, user, tmp_prp);
@@ -317,7 +383,7 @@ router.use(function timeLog (req,res, next){
 
             }
 
-            user.chat.push(chat);
+            user.chat.unshift(chat);
             user.save(function(err){
                // console.log(err, user, tmp_prp);
             })
@@ -326,5 +392,54 @@ router.use(function timeLog (req,res, next){
     })
 
  }
+
+ router.all("/owner/:ownerid/:page/:count*?", function(req,res){
+    var page = parseInt(req.params.page || '0');
+    var count = parseInt(req.params.count || '20');
+    var ownerid = req.params.ownerid;
+
+
+    var userid = "-1";
+
+    var userinfo = res.locals.userinfo;
+    if(userinfo.role != System_Code.user.role.admin ){
+        userid = userinfo.id;
+    }
+
+    var condition = {};
+    if(userid != "-1"){
+        condition = {'chat.userid':userid};
+    }else{
+        userid = userinfo.id;
+        condition ={};
+    }
+
+    getOwnerChat(ownerid, page, count, condition ).then((docs)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:docs});
+    })
+    .catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});    
+    });
+
+ });
+
+
+ async function getOwnerChat(ownerid, page, count, condition ){
+   // console.log("start", ownerid, page, count, condition);
+   PropertyOwnerModel.findOneAndUpdate({id:ownerid}, {$set:{newmessage:0}},function(err, doc){});
+
+   var docs = await PropertyOwnerModel.aggregate(
+        [{$match:{id:ownerid}},
+         {$project:{_id:0 ,chat:1, firstname:1, lastname:1, contact:1, leadtype:1, status:1, owner_city:1, owner_state:1, email:1}},
+         {$unwind:'$chat'},
+         {$match:condition},
+         { $skip: page*count },
+        { $limit: count }
+        ]       
+    ).exec();
+   // console.log(docs);
+    return docs;
+ }
+
 
 module.exports = router;
