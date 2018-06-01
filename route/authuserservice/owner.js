@@ -72,6 +72,35 @@ router.use(function timeLog (req,res, next){
 
  });
 
+
+ router.post("/info", function(req,res){
+    var id = req.body.id || '';
+
+    var userid = "-1";
+
+    var userinfo = res.locals.userinfo;
+    if(userinfo.role != System_Code.user.role.admin ){
+        userid = userinfo.id;
+    }
+
+    var condition = {};
+    if(userid != "-1"){
+        condition = {'properties.sent_history.sent_userid':userid};
+    }else{
+        userid = userinfo.id;
+        condition ={};
+    }
+
+    getOwnerinfo(condition, id).then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    }).catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
+        return;    
+    });
+
+ });
+
+
  router.post("/delete", function(req,res){
     var id = req.body.id  || '';
 
@@ -99,6 +128,25 @@ router.use(function timeLog (req,res, next){
 
  });
 
+ async function getOwnerinfo(condition, id){
+     condition["id"]= id;
+     console.log("get owner info",condition);
+    var doc = await PropertyOwnerModel.findOne(condition,
+        {properties:1, firstname:1, id:1, _id:0, lastname:1, email:1, contact:1, leadtype:1,newmessage:1,
+            owner_city:1,
+            owner_state:1,
+            phone:1,
+            status:1,
+            rated:1,
+            last_sms_received_date:1,
+            newmessage:1,
+            leadtype:1
+        }
+    ).exec();
+
+    return doc;    
+ }
+
 
  async function updateOwnerinfo(condition, owner){
     condition['id']=owner.id;
@@ -115,5 +163,43 @@ router.use(function timeLog (req,res, next){
 
     return doc;
  } 
+
+
+ router.post("/property/update", function(req, res){
+
+    var ownerid = req.body.id || '';
+    var property = req.body.property;
+
+    var userid = "-1";
+
+    var userinfo = res.locals.userinfo;
+    if(userinfo.role != System_Code.user.role.admin ){
+        userid = userinfo.id;
+    }
+
+    var condition = {};
+    if(userid != "-1"){
+        condition = {'properties.sent_history.sent_userid':userid};
+    }else{
+        userid = userinfo.id;
+        condition ={};
+    }
+
+    condition["id"] = ownerid;
+
+    updateproperty(condition, property).then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    }).catch((err)=>{
+        console.log("updateproperty function", err);
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
+        return;    
+    });
+ });
+
+ async function updateproperty(condition, property){
+    condition["properties.id"] = property.id;
+    await PropertyOwnerModel.update(condition, {'properties.$':property}).exec();
+    return true;
+ }
 
 module.exports = router;

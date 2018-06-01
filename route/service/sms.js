@@ -124,11 +124,14 @@ router.use(function timeLog (req,res, next){
 
                 prop_owner.newmessage = 1;
 
+                //Emit new message arrived...
                 global_area.notification_io.to('channel'+prop_owner.id).emit("newmessage", {
                     chat:chat,
                     firstname:prop_owner.firstname,
                     lastname:prop_owner.lastname
                 });
+
+                global_area.notification_io.emit("newchat",{});
 
                 prop_owner.save(function(err){
                     console.log("chat stored ", chat);

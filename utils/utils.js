@@ -176,6 +176,55 @@ var Utils = {
         }
         return "";
     }
+    ,
+    callpodiourl:function(url,method, data, auth_token){
+        var http = require('https');
+        const options = {
+            hostname: "api.podio.com",
+            port: 443,
+            path: url,
+            method: method,
+            headers: {
+             // 'Content-Type': 'application/x-www-form-urlencoded',
+              //'Content-Length': Buffer.byteLength(postData)
+              'Authorization':'OAuth2 ' + auth_token
+            }
+          };
+    
+
+          return new Promise((resolve,reject)=>{
+            const request = http.request(options, (result) => {
+                console.log(`STATUS: ${result.statusCode}`);
+                console.log(`HEADERS: ${JSON.stringify(result.headers)}`);
+                result.setEncoding('utf8');
+                var data ="";
+                result.on('data', (chunk) => {
+                 // console.log(`BODY: ${chunk}`);
+                  data+=chunk;
+        
+                });
+        
+                result.on('end', () => {
+                 // console.log('No more data in response.', data);
+                    console.log(data);
+                    resolve(data);
+                });
+              });
+              
+              request.on('error', (e) => {
+                console.error(`problem with request: ${e.message}`);
+                reject(e);
+              });
+              request.write(JSON.stringify(data));
+              request.end();
+          });
+
+
+          
+          // write data to request body
+         // request.write(postData);
+
+    }
 }
 
 module.exports = Utils;

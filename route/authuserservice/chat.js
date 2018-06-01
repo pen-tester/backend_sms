@@ -17,7 +17,7 @@ var UserModel = require('../../models/users');
 var PropertyOwnerModel = require('../../models/property_owners');
 var Property_uploadModel = require('../../models/properties_uploaded');
 var SmsModel = require('../../models/sms_templates');
-
+var LeadtypeModel = require('../../models/leadtype');
 //Middleware for this router
 router.use(function timeLog (req,res, next){
     // console.log('Time: ', Date.now(), 'Requests: ', req);
@@ -44,6 +44,11 @@ router.use(function timeLog (req,res, next){
     var page = parseInt(req.params.page || '0');
     var count = parseInt(req.params.count || '10');
     var userid = req.body.userid || '';
+    var keyword = req.body.keyword || '';
+    var leadtype = req.body.leadtype || '';
+    var star = req.body.star;
+    var grades = req.body.grades;
+    if(!grades) grades =[];
 
     var userinfo = res.locals.userinfo;
     if(userinfo.role != System_Code.user.role.admin ){
@@ -53,22 +58,42 @@ router.use(function timeLog (req,res, next){
     var condition = {};
     var chat_condition = {};
     if(userid != "-1"){
-        condition = {'properties.sent_history.sent_userid':userid};
-        chat_condition = {$eq:['$$item.userid', userid]}
+        condition = {
+            'properties.sent_history.sent_userid':userid
+        };
+        chat_condition =
+            {'$$item.userid':userid};
+
     }else{
         userid = userinfo.id;
-        condition ={};
-        chat_condition ={};
+        condition ={
+
+        };
+        chat_condition ={
+
+
+            
+        };
     }
 
 
-    console.log(page, count);
+    if(leadtype!='-1'){
+        condition.leadtype = leadtype;
+    }
+    if(star !=-1 && star != null){
+        condition.rated= star;
+    }
+
+
+
+
+    console.log(page, count, condition, chat_condition, grades);
     PropertyOwnerModel.aggregate(
-        [{$match:condition},        { $sort : { last_sms_received_date : -1} },
+        [{$match:condition},   { $sort : { last_sms_received_date : -1} },
             {$skip: page*count},
             {$limit:count}
-        , {$project:{chat:{$filter:{input:'$chat', as:'item', cond:{$and:[{$eq:['$$item.replied_chat',0]}, chat_condition]}}}, phone:1, firstname:1, lastname:1, id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, _id:0}}, 
-        {$project:{chat:{$slice:['$chat',3]}, sent_userid:{$concat:[userid]}, phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, nonempty:{$gte:[{$size:'$chat'},1]}}},{$match:{nonempty:true}},
+        , {$project:{included:{$in:['$status', grades]},chat:{$filter:{input:'$chat', as:'item', cond:{$and:[{$eq:['$$item.replied_chat',0]}, {$or:[{$eq:['$$item.userid',userid]}, {$eq:[userinfo.role, System_Code.user.role.admin]}]} ]}}}, phone:1, firstname:1, lastname:1, id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, _id:0}}, 
+        {$project:{chat:{$slice:['$chat',3]}, sent_userid:{$concat:[userid]}, phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, nonempty:{$gte:[{$size:'$chat'},1]},included:1}},{$match:{nonempty:true, included:true}},
         {$lookup:     {
             from: 'users',
             localField: 'sent_userid',
@@ -216,6 +241,26 @@ router.use(function timeLog (req,res, next){
 
  }); 
 
+ router.all("/leadtype/list", function(req,res){
+
+    var userinfo = res.locals.userinfo;
+    var userid = userinfo.id;
+
+    //console.log(docs);
+    getLeadTypes().then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    })
+    .catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});    
+    });
+
+ }); 
+
+ async function getLeadTypes(){
+    var docs = LeadtypeModel.find({},{value:1, text:1}).exec();
+    return docs;
+ }
+
  async function updateOwnerinfochat(ownerid, chat){
     var owner = await PropertyOwnerModel.findOne({id:ownerid}).exec();
     if(owner == null){
@@ -251,6 +296,11 @@ router.use(function timeLog (req,res, next){
 
             tmp_prp.upload_userid = prp_up.upload_userid;
             tmp_prp.refid = prp_up.id;
+            
+            var timestampe = Date.now();
+            var prop_id = "p" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
+
+            tmp_prp.id = prop_id;
             //tmp_prp.sent_history
 
            // console.log(prp_up, tmp_prp);
@@ -262,6 +312,12 @@ router.use(function timeLog (req,res, next){
             smscontent = smscontent.replace("{state}", tmp_prp.state);
             smscontent = smscontent.replace(new RegExp("<br>", 'g'), "\r\n");
            
+            try{
+                LeadtypeModel.findOneAndUpdate({value:tmp_prp.leadtype},{value:tmp_prp.leadtype, text:tmp_prp.leadtype},{upsert:true}).exec();
+            }catch(ex){
+                console.log("add lead type error ", ex);
+            }
+
 
             //Get the full user info... with userid...
             sendSms(smscontent, userid, new_phone);
@@ -322,11 +378,8 @@ router.use(function timeLog (req,res, next){
 
  async function updateOwnerinfo(new_phone, tmp_prp, chat, sent_history){
      console.log("owner phone", new_phone);
-    PropertyOwnerModel.findOne({phone:new_phone}, function(err, user){
-        if(err){
-
-            return;
-        }
+    var user = await PropertyOwnerModel.findOne({phone:new_phone}).exec();
+    
         console.log( "search", new_phone);         
         if(user == null){
 
@@ -354,9 +407,7 @@ router.use(function timeLog (req,res, next){
 
             newowner.chat.unshift(chat);
 
-            newowner.save(function(err){
-                //console.log(err, user, tmp_prp);
-            });
+            await newowner.save();
         }else{
             var prp_len = user.properties.length;
             var p_index =0;
@@ -384,12 +435,10 @@ router.use(function timeLog (req,res, next){
             }
 
             user.chat.unshift(chat);
-            user.save(function(err){
-               // console.log(err, user, tmp_prp);
-            })
+            await user.save();
 
         }
-    })
+
 
  }
 

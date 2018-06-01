@@ -20,6 +20,8 @@ var smstemplate_route=require('./smstemplate');
 var chat_route=require('./chat');
 var uploadproperty_route=require('./uploadproperty');
 var owner_route = require('./owner');
+var zillow_route = require('./zillow_route');
+var podio_route = require('./podio_route');
 //Middleware for this router
 router.use(function timeLog (req,res, next){
    // console.log('Time: ', Date.now(), 'Requests: ', req);
@@ -85,6 +87,8 @@ router.use(function origin_set (req,res, next){
  router.use('/chat', chat_route);
  router.use('/uploadproperty', uploadproperty_route);
  router.use('/owner', owner_route);
+ router.use('/zillow', zillow_route);
+ router.use('/podio', podio_route);
 
  router.all("/test", function(req,res){
     res.json({status:'error', error:'The checkout has to be post method'});
