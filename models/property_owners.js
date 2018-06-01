@@ -15,6 +15,7 @@ var property_owners_schema = mongoose.Schema({
     status:String,
     rated:Number,
     newmessage:Number,
+    called:Number,
     properties:[
         Schema.Types.Mixed
         /*

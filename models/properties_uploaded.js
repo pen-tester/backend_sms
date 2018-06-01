@@ -19,7 +19,7 @@ var property_upload_schema = mongoose.Schema({
            {
                smstag:String,
                templateid:String,
-               sent_date:Date,
+               sent_date:Number,
                sent_userid:String,
                success_phone:[]
            }

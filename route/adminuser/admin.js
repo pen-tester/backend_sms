@@ -17,6 +17,7 @@ var UserModel = require('../../models/users');
 //Sub routing for admin function
 var user_route = require('./user');
 var phone_route = require('./phone');
+var report_route = require('./report');
 
 //Middleware for this router
 router.use(function timeLog (req,res, next){
@@ -87,4 +88,5 @@ router.use(function origin_set (req,res, next){
 
  router.use('/user',user_route );
  router.use('/phone',phone_route ); 
+ router.use('/report',report_route ); 
 module.exports = router;

@@ -140,7 +140,8 @@ router.use(function timeLog (req,res, next){
             rated:1,
             last_sms_received_date:1,
             newmessage:1,
-            leadtype:1
+            leadtype:1,
+            called:1
         }
     ).exec();
 

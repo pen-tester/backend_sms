@@ -109,7 +109,8 @@ router.use(function timeLog (req,res, next){
                 'userinfo.id':1,'userinfo.firstname':1,'userinfo.lastname':1,chat:1 , phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1
                 , rated:1, newmessage:1
                 }
-            }
+            },
+            {$match:{$or:[{'firstname':{$regex:'.*'+keyword+'.*', $options:'i'}},{'lastname':{$regex:'.*'+keyword+'.*', $options:'i'}},{'phone':{$regex:'.*'+keyword+'.*'}},{'chat.content':{$regex:'.*'+keyword+'.*', $options:'i'}}]}}
         ]       
         ,function(err, docs){
             if(err){
@@ -132,6 +133,80 @@ router.use(function timeLog (req,res, next){
     )
   
  });
+
+ router.post("/count", function(req,res){
+
+    var userid = req.body.userid || '';
+    var keyword = req.body.keyword || '';
+    var leadtype = req.body.leadtype || '';
+    var star = req.body.star;
+    var grades = req.body.grades;
+    if(!grades) grades =[];
+
+    var userinfo = res.locals.userinfo;
+    if(userinfo.role != System_Code.user.role.admin ){
+        userid = userinfo.id;
+    }
+
+    var condition = {};
+    var chat_condition = {};
+    if(userid != "-1"){
+        condition = {
+            'properties.sent_history.sent_userid':userid
+        };
+        chat_condition =
+            {'$$item.userid':userid};
+
+    }else{
+        userid = userinfo.id;
+        condition ={
+
+        };
+        chat_condition ={
+
+
+            
+        };
+    }
+
+
+    if(leadtype!='-1'){
+        condition.leadtype = leadtype;
+    }
+    if(star !=-1 && star != null){
+        condition.rated= star;
+    }
+
+
+
+    PropertyOwnerModel.aggregate(
+        [{$match:condition}  ,
+        {$project:{included:{$in:['$status', grades]},chat:{$filter:{input:'$chat', as:'item', cond:{$and:[{$eq:['$$item.replied_chat',0]}, {$or:[{$eq:['$$item.userid',userid]}, {$eq:[userinfo.role, System_Code.user.role.admin]}]} ]}}}, phone:1, firstname:1, lastname:1, id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, _id:0}}, 
+        {$project:{chat:{$slice:['$chat',3]}, sent_userid:{$concat:[userid]}, phone:1, firstname:1, lastname:1,id:1, leadtype:1, status:1,last_sms_received_date:1, rated:1, newmessage:1, nonempty:{$gte:[{$size:'$chat'},1]},included:1}},{$match:{nonempty:true, included:true}},
+        {$count:'total'}
+        ]       
+        ,function(err, docs){
+            if(err){
+                console.log(err);
+                res.status(System_Code.http.bad_req)
+                .json(
+                    {
+                        status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error,
+                        error:err
+                    }
+                );
+                return;
+            }
+            res.json({
+                status:System_Code.statuscode.success,
+                code:System_Code.responsecode.ok,
+                data:docs
+            });
+        }
+    )
+  
+ });
+
 
 
  router.post("/send", function(req,res){
@@ -296,6 +371,7 @@ router.use(function timeLog (req,res, next){
 
             tmp_prp.upload_userid = prp_up.upload_userid;
             tmp_prp.refid = prp_up.id;
+            tmp_prp.date_added_user = Date.now();
             
             var timestampe = Date.now();
             var prop_id = "p" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
@@ -420,7 +496,9 @@ router.use(function timeLog (req,res, next){
                 tmp_prp.sent_history.push(sent_history);                                    
                 user.properties.push(tmp_prp);
             }else{
+               // console.log("existed property index", p_index, user.properties[p_index].sent_history);
                 user.properties[p_index].sent_history.push(sent_history);
+               // console.log("after added existed property index", p_index, user.properties[p_index].sent_history);
             }
 
             try{
@@ -435,8 +513,9 @@ router.use(function timeLog (req,res, next){
             }
 
             user.chat.unshift(chat);
-            await user.save();
-
+            //console.log("before saving",user.properties[p_index].sent_history);
+            //await user.save();
+            await PropertyOwnerModel.update({phone:user.phone}, user).exec();
         }
 
 
