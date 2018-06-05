@@ -203,4 +203,45 @@ router.use(function timeLog (req,res, next){
     return true;
  }
 
+
+ router.post("/property/add", function(req, res){
+
+    var ownerid = req.body.id || '';
+    var property = req.body.property;
+
+    var userid = "-1";
+
+    var userinfo = res.locals.userinfo;
+    if(userinfo.role != System_Code.user.role.admin ){
+        userid = userinfo.id;
+    }
+
+    var condition = {};
+    if(userid != "-1"){
+        condition = {'properties.sent_history.sent_userid':userid};
+    }else{
+        userid = userinfo.id;
+        condition ={};
+    }
+
+    condition["id"] = ownerid;
+
+    addpropertytowoner(condition, property).then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    }).catch((err)=>{
+        console.log("updateproperty function", err);
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
+        return;    
+    });
+ });
+
+ async function addpropertytowoner(condition, property){
+    var timestampe = Date.now();
+    var prop_id = "p" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
+    property["id"] = prop_id;
+    console.log(property, condition);
+    await PropertyOwnerModel.update(condition, {$push:{'properties':property}}).exec();
+    return true;
+ } 
+
 module.exports = router;
