@@ -181,7 +181,7 @@ router.use(function timeLog (req,res, next){
  });
 
  async function deleteContact(id){
-    var doc = await PropertyOwnerModel.findOneAndRemove({id:id}).exec();
+    var doc = await ContactModel.findOneAndRemove({id:id}).exec();
     return doc;
  } 
 
