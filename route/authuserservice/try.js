@@ -97,13 +97,14 @@ router.use(function timeLog (req,res, next){
  }); 
 
  async function updateContactinfochat(phone, chat){
+    sendSms(chat.content, phone);
     var owner = await ContactModel.findOne({phone:phone}).exec();
     if(owner == null){
-        throw new Error("no owner");
+        //throw new Error("no owner");
         return;
     } 
     
-    sendSms(chat.content, owner.phone);
+    //sendSms(chat.content, owner.phone);
 
     owner.chat.unshift(chat);
     owner.save(function(err){
