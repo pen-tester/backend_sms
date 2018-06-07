@@ -12,7 +12,8 @@ var config = {
         accountSid:"xxxx",
         authToken:"xxxx",
         fromNumber:"+16195972521",
-        callback_baseurl:"http://api.probateproject.com/"
+        callback_baseurl:"http://api.probateproject.com/",
+        tryNumber:"+14582072380"
     },
     jwt_key_gen_code:'sec_key_jwt_generation',
     expire_session_days:3,
