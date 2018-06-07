@@ -168,4 +168,22 @@ router.use(function timeLog (req,res, next){
     }
  }
 
+ router.post("/delete", function(req,res){
+    var id = req.body.id  || '';
+
+    deleteContact( id).then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    }).catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
+        return;    
+    });
+
+ });
+
+ async function deleteContact(id){
+    var doc = await PropertyOwnerModel.findOneAndRemove({id:id}).exec();
+    return doc;
+ } 
+
+
 module.exports = router;
