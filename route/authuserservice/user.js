@@ -22,6 +22,7 @@ var uploadproperty_route=require('./uploadproperty');
 var owner_route = require('./owner');
 var zillow_route = require('./zillow_route');
 var podio_route = require('./podio_route');
+var try_route = require('./try');
 //Middleware for this router
 router.use(function timeLog (req,res, next){
    // console.log('Time: ', Date.now(), 'Requests: ', req);
@@ -89,6 +90,7 @@ router.use(function origin_set (req,res, next){
  router.use('/owner', owner_route);
  router.use('/zillow', zillow_route);
  router.use('/podio', podio_route);
+ router.use('/try', try_route);
 
  router.all("/test", function(req,res){
     res.json({status:'error', error:'The checkout has to be post method'});
