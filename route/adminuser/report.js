@@ -17,6 +17,7 @@ var Config  = require('../../config/config');
 //User DB...
 var PropertyOwnerModel = require('../../models/property_owners');
 var PropertyuploadModel = require('../../models/properties_uploaded');
+var PropertyArchiveModel = require('../../models/properties_archive');
 
 router.all('/list/:page/:count*?', function(req, res){
     var page = parseInt(req.params["page"]);
@@ -103,7 +104,7 @@ async function getTotalSmsCount(start, end){
 async function getTotalBatchCount(start,end){
     if(end == 0) end = Date.now();
     console.log(start, end);
-    var result = await PropertyuploadModel.aggregate(
+    var result = await PropertyArchiveModel.aggregate(
         [
             {$unwind:'$sent_history'},
             {$match:{'sent_history.sent_date':{$gte:start, $lte:end}} },

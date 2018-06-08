@@ -18,6 +18,7 @@ var PropertyOwnerModel = require('../../models/property_owners');
 var Property_uploadModel = require('../../models/properties_uploaded');
 var SmsModel = require('../../models/sms_templates');
 var LeadtypeModel = require('../../models/leadtype');
+var PropertyArchiveModel = require('../../models/properties_archive');
 //Middleware for this router
 router.use(function timeLog (req,res, next){
     // console.log('Time: ', Date.now(), 'Requests: ', req);
@@ -412,8 +413,21 @@ router.use(function timeLog (req,res, next){
         }
 
         prp_up.sent_history.push(sent_history);
+
         prp_up.save(function(err){
            // console.log(err);
+        });
+        try{
+            delete prp_up._id;
+            delete prp_up.__v;
+        }
+        catch(ex){
+            console.log("upload property _id remove", ex);
+        }
+        PropertyArchiveModel.findOneAndUpdate({
+            id:prp_up.id
+        },{$set:prp_up} ,{upsert:true}, function(err,docs){
+            console.log("archive", err);
         });
     }
     return true;

@@ -16,6 +16,7 @@ var Config  = require('../../config/config');
 var UserModel = require('../../models/users');
 var PropertyOwnerModel = require('../../models/property_owners');
 var Property_uploadModel = require('../../models/properties_uploaded')
+var PropertyArchiveModel = require('../../models/properties_archive');
 
 //Middleware for this router
 router.use(function timeLog (req,res, next){
@@ -57,7 +58,7 @@ router.use(function timeLog (req,res, next){
         condition ={};
     }
 
-    Property_uploadModel.find(condition).skip(page*count).limit(count).exec(function(err, docs){
+    PropertyArchiveModel.find(condition).skip(page*count).limit(count).exec(function(err, docs){
         if(err){
             res.json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
             return;
@@ -80,7 +81,7 @@ router.use(function timeLog (req,res, next){
         condition ={};
     }
 
-    Property_uploadModel.count(condition,function(err, count){
+    PropertyArchiveModel.count(condition,function(err, count){
         if(err){
             res.json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
             return;
