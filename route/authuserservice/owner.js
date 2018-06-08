@@ -244,4 +244,34 @@ router.use(function timeLog (req,res, next){
     return true;
  } 
 
+ router.post("/add", function(req, res){
+
+    var owner = req.body.owner || {};
+
+    var userid = "-1";
+
+    var userinfo = res.locals.userinfo;
+    if(userinfo.role != System_Code.user.role.admin ){
+        userid = userinfo.id;
+    }
+
+    addowner(owner).then((result)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:result});
+    }).catch((err)=>{
+        console.log("add owner function", err);
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err});
+        return;    
+    });
+ });
+
+ async function addowner(owner){
+    var timestampe = Date.now();
+    var prop_id = "o" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
+    owner["id"] = prop_id;
+    owner.chat=[];
+    owner.voice=[];
+    await PropertyOwnerModel.update({phone:owner.phone}, {$set:owner},{upsert:true}).exec();
+    return true;
+ }
+
 module.exports = router;
