@@ -43,6 +43,8 @@ router.all('/total_count', function(req, res){
     });
 });
 
+
+
 router.post('/total_sms', function(req, res){
     var start = req.body.start;
     var end = req.body.end;
@@ -126,6 +128,5 @@ async function getPropertiesByPage(page, entry){
     ).exec();
     return result;
 }
-
 
 module.exports = router;

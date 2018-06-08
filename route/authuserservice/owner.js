@@ -274,4 +274,59 @@ router.use(function timeLog (req,res, next){
     return true;
  }
 
+ router.all('/total_count', function(req, res){
+    getTotalOwnerCount().then((data)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:data}); 
+    })
+    .catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err}); 
+        console.log(err);
+    });
+});
+
+router.all('/list/:page/:count*?', function(req, res){
+    var page = parseInt(req.params["page"]);
+    var count = parseInt( req.params["count"] || '300' );
+
+    //List all users for page number and limit
+    //to limit to normal usr use {role:System_Code.user.role.user } for condition
+    getOwnerByPage(page,count).then((data)=>{
+        res.json({status:System_Code.statuscode.success, code:System_Code.responsecode.ok, data:data}); 
+    })
+    .catch((err)=>{
+        res.status(System_Code.http.bad_req).json({status:System_Code.statuscode.fail, code:System_Code.responsecode.user_model_error, error:err}); 
+        console.log(err);
+    });
+});
+
+async function getTotalOwnerCount(){
+    var result = PropertyOwnerModel.aggregate(
+        [
+            {$project:{ firstname:1, lastname:1, phone:1, id:1,called:1,
+                last_sms_received_date:1,    owner_city:1,
+                owner_state:1,  email:1, contact:1, leadtype:1,status:1,rated:1,newmessage:1,
+                called:1  
+            }},
+            {$count:'total'}
+        ]
+    ).exec();
+    return result;
+}
+
+async function getOwnerByPage(page, entry){
+    var result = PropertyOwnerModel.aggregate(
+        [
+            {$project:{ firstname:1, lastname:1, phone:1, id:1,called:1,
+                last_sms_received_date:1,    owner_city:1,
+                owner_state:1,  email:1, contact:1, leadtype:1,status:1,rated:1,newmessage:1,
+                called:1  ,_id:0
+            }},
+            {$skip:page*entry},
+            {$limit:entry}
+        ]
+    ).exec();
+    return result;
+}
+
+
 module.exports = router;
