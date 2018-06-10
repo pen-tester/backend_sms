@@ -39,8 +39,14 @@ router.post('/update', function(req,res){
         try{
             if(typeof user.password != 'undefined' && user.password!=""){
                 user.password = md5(user.password);
-            }
+            }else{
+               try{
+                 delete user.password;
+               }catch(ex){
 
+               }
+            }
+            
 
             UserModel.findOneAndUpdate({id:user.id},{$set:user}, function(err, doc){
                 if(err){
