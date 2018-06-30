@@ -140,6 +140,7 @@ var Utils = {
             firstname: user.firstname,
             lastname: user.lastname,
             role:user.role,
+            permissions:user.permissions,
             logged_date:Date.now(),
             expire_date:now.getTime()
           }
