@@ -70,7 +70,7 @@ router.use(function timeLog (req,res, next){
     const voiceResponse = new VoiceResponse();
     voiceResponse.dial({
       callerId: Additional_Config.twilio_voice_config.fromNumber,
-    }, req.body.number);
+    }, req.body.phone);
   
     res.type('text/xml');
     res.send(voiceResponse.toString());
