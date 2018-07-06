@@ -72,8 +72,8 @@ router.use(function timeLog (req,res, next){
       callerId: Additional_Config.twilio_voice_config.fromNumber,
     }, req.body.number);
   
-    response.type('text/xml');
-    response.send(voiceResponse.toString());
+    res.type('text/xml');
+    res.send(voiceResponse.toString());
 })
 
 
@@ -88,8 +88,8 @@ router.post("/incoming", function(req,res){
     dial.client('andrew');
 
 
-    response.type('text/xml');
-    response.send(voiceResponse.toString());
+    res.type('text/xml');
+    res.send(voiceResponse.toString());
 })
 
 
