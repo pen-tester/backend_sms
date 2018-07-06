@@ -9,8 +9,13 @@ var Util = require('../../utils/utils');
 //System Codes for request, respond, some types
 var System_Code = require('../../config/system_code');
 var Config  = require('../../config/config');
+var Additional_Config  = require('../../config/config_additional');
+
 
 var twilio = require('twilio');
+const ClientCapability = twilio.jwt.ClientCapability;
+const VoiceResponse = twilio.twiml.VoiceResponse;
+
 
 //User DB...
 var UserModel = require('../../models/users');
@@ -38,7 +43,56 @@ router.use(function timeLog (req,res, next){
       next();
   });
  
+ router.post("/token", function(req,res){
+     var clientName = req.body.clientName;
+    const capability = new ClientCapability({
+        accountSid: Additional_Config.twilio_voice_config.accountSid,
+        authToken: Additional_Config.twilio_voice_config.authToken
+      });
+    
+      capability.addScope(
+        new ClientCapability.OutgoingClientScope({
+          applicationSid: Additional_Config.twilio_voice_config.voicecall_appsid})
+      );
+      capability.addScope(
+        new ClientCapability.IncomingClientScope(clientName));
+
+
+      const token = capability.toJwt();
+    
+      // Include token in a JSON response
+      res.json({status:System_Code.statuscode.success, data:{
+        token: token,
+      }});
+ })
  
+ router.post("/call", function(req,res){
+    const voiceResponse = new VoiceResponse();
+    voiceResponse.dial({
+      callerId: Additional_Config.twilio_voice_config.fromNumber,
+    }, req.body.number);
+  
+    response.type('text/xml');
+    response.send(voiceResponse.toString());
+})
+
+
+ 
+router.post("/incoming", function(req,res){
+    const voiceResponse = new VoiceResponse();
+    const dial = voiceResponse.dial({
+        callerId: req.body.From,
+      });
+
+
+    dial.client('andrew');
+
+
+    response.type('text/xml');
+    response.send(voiceResponse.toString());
+})
+
+
  router.post("/receive", function(req,res){
      var from = req.body.From || '';
      var to = req.body.To || '';
