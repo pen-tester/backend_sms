@@ -97,49 +97,68 @@ router.post("/register", function(req,res){
           return;
     }else{
         //Check the user authentification...
-        pwd = md5(pwd);
-        var parts  = name.split(/\s+/);
-        var firstname="", lastname ="";
-        if(parts.length>1){
-            firstname = parts[0]; lastname =parts[1];
-        }else{
-            firstname = parts[0]; 
-        }
-
-        //var timestampe = Math.round(Date.now()/1000);
-        var timestampe = Date.now();
-        var userid = "u" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
-
-        var user = new UserModel(
-            {
-                firstname:firstname,
-                lastname:lastname,
-                email:email,
-                created:Date.now(),
-                password:pwd,
-                id:userid
-            }
-        )
-
-        user.save(function(err){
-            console.log("save user error", err);
-        });
-
-
-        res.json(
-            {
-                status:System_Code.statuscode.success,
-                code: System_Code.responsecode.ok,
-                data:{
-                    id:userid,
-                    firstname:firstname,
-                    lastname:lastname,
-                    user:user
+        registerUser(name, email, pwd).then((result)=>{
+            res.json(
+                {
+                    status:System_Code.statuscode.success,
+                    code: System_Code.responsecode.ok,
+                    data:{
+                        id:result.userid,
+                        firstname:result.firstname,
+                        lastname:result.lastname,
+                    }
                 }
-            }
-        );
+            );
+        }).catch((error)=>{
+            res.json({
+                status:System_Code.statuscode.fail,
+                code:System_Code.responsecode.param_error,
+                msg:error.message
+             });
+        });
     }
     //res.json({status:'error', error:'The checkout has to be post method', code:MessageCode.error});
 });
+
+async function registerUser(name, email, pwd){
+    //Check email is existed...
+    var user = await UserModel.findOne({email:email}).exec();
+
+    if(user != null){
+        throw new Error("The Email is existed");
+    }
+
+    pwd = md5(pwd);
+    var parts  = name.split(/\s+/);
+    var firstname="", lastname ="";
+    if(parts.length>1){
+        firstname = parts[0]; lastname =parts[1];
+    }else{
+        firstname = parts[0]; 
+    }
+
+    //var timestampe = Math.round(Date.now()/1000);
+    var timestampe = Date.now();
+    var userid = "u" + Math.floor((1 + Math.random())* 1000).toString(10).substring(1) + timestampe;
+
+    var user = new UserModel(
+        {
+            firstname:firstname,
+            lastname:lastname,
+            email:email,
+            created:Date.now(),
+            password:pwd,
+            id:userid
+        }
+    )
+
+   /* user.save(function(err){
+        console.log("save user error", err);
+    });*/
+
+    await user.save();
+
+    return user;
+}
 
 module.exports = router;

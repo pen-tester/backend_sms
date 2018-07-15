@@ -86,6 +86,7 @@ router.use(function timeLog (req,res, next){
      else{
         //stroing the sms to the db... the from number is the one of the property owner...
         PropertyOwnerModel.findOne({phone:from}, function(err, prop_owner){
+            
             if(err || prop_owner == null){
                 res.json(
                     {

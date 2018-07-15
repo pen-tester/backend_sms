@@ -390,7 +390,7 @@ router.use(function timeLog (req,res, next){
            // console.log(prp_up, tmp_prp);
 
             //Sending sms.... to this phone...
-            var smscontent = sms.content.replace("{name}", tmp_prp.firstname + " "+tmp_prp.lastname);
+            var smscontent = sms.content.replace("{name}", tmp_prp.firstname);
             smscontent = smscontent.replace("{addr}", tmp_prp.address);
             smscontent = smscontent.replace("{city}", tmp_prp.city);
             smscontent = smscontent.replace("{state}", tmp_prp.state);
